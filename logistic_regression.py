@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression, LinearRegression
 import argparse
 from sklearn.metrics import r2_score
+import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 class MyLogisticRegression:
@@ -38,7 +39,7 @@ class MyLogisticRegression:
             self.X_test = self.test_set[['exam_score_1', 'exam_score_2']]
             self.y_test = self.test_set['label']
         # else:
-        #     print("FUCK2")
+        #     print("ERROR3")
         
         
     def model_fit_linear(self):
@@ -83,7 +84,7 @@ class MyLogisticRegression:
             f1 = np.array(f1)
             support = np.array(support)
         # else:
-        #     print('FUCK1')
+        #     print('ERROR2')
         
         assert precision.shape == recall.shape == f1.shape == support.shape == (2,), "precision, recall, f1, support should be an array of shape (2,)"
         return [accuracy, precision, recall, f1, support]
@@ -114,11 +115,35 @@ class MyLogisticRegression:
             f1 = np.array(f1)
             support = np.array(support)
         # else:
-        #     print('FUCK1')
+        #     print('ERROR1')
 
         
         assert precision.shape == recall.shape == f1.shape == support.shape == (2,), "precision, recall, f1, support should be an array of shape (2,)"
         return [accuracy, precision, recall, f1, support]
+
+    def plot_decision_boundary(self, model, title):
+        """
+        Plots the decision boundary for a given model (logistic or linear).
+        """
+        # Create a mesh grid based on the range of values for the two features
+        x_min, x_max = self.X_train['exam_score_1'].min() - 1, self.X_train['exam_score_1'].max() + 1
+        y_min, y_max = self.X_train['exam_score_2'].min() - 1, self.X_train['exam_score_2'].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.01),
+                            np.arange(y_min, y_max, 0.01))
+        
+        # Make predictions for each point in the mesh grid
+        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+
+        # Plot the contour and training examples
+        plt.contourf(xx, yy, Z, alpha=0.8)
+        plt.scatter(self.X_train['exam_score_1'], self.X_train['exam_score_2'], c=self.y_train, edgecolors='k', marker='o')
+        plt.title(title)
+        plt.xlabel('Exam Score 1')
+        plt.ylabel('Exam Score 2')
+        plt.show()
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Linear Regression')
@@ -127,7 +152,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     classifier = MyLogisticRegression(args.dataset_num, args.perform_test)
     acc = classifier.model_predict_linear()
-    # print(f"LINEAR REGRESSION STATS:\n{acc}")
+    # classifier.plot_decision_boundary(classifier.model_linear, "Linear Regression Decision Boundary")
+    print(f"LINEAR REGRESSION STATS:\n{acc}")
     acc = classifier.model_predict_logistic()
-    # print(f"LOGISTIC REGRESSION STATS:\n{acc}")
+    # classifier.plot_decision_boundary(classifier.model_logistic, "Logistic Regression Decision Boundary")
+    print(f"LOGISTIC REGRESSION STATS:\n{acc}")
     
