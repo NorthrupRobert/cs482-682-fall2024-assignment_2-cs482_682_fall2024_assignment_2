@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression,LinearRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 import argparse
+from sklearn.metrics import r2_score
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 class MyLogisticRegression:
     def __init__(self, dataset_num, perform_test):
         self.training_set = None
         self.test_set = None
-        self.model_logistic = None
-        self.model_linear = None
+        self.model_logistic = LogisticRegression()
+        self.model_linear = LinearRegression()
         self.X_train = None
         self.y_train = None
         self.X_test = None
@@ -30,22 +31,31 @@ class MyLogisticRegression:
             print("unsupported dataset number")
             
         self.training_set = pd.read_csv(train_dataset_file, sep=',', header=0)
+        self.X_train = self.training_set[['exam_score_1', 'exam_score_2']]
+        self.y_train = self.training_set['label']
         if self.perform_test:
             self.test_set = pd.read_csv(test_dataset_file, sep=',', header=0)
+            self.X_test = self.test_set[['exam_score_1', 'exam_score_2']]
+            self.y_test = self.test_set['label']
+        # else:
+        #     print("FUCK2")
         
         
     def model_fit_linear(self):
         '''
         initialize self.model_linear here and call the fit function
         '''
-        pass
+        # Find the model that best fits the training data, using linear regression
+        # print(f"XTRAIN SIZE: {self.X_train.shape}")
+        # print(f"YTRAIN SIZE: {self.y_train.shape}")
+        self.model_linear.fit(self.X_train, self.y_train)
     
     def model_fit_logistic(self):
         '''
         initialize self.model_logistic here and call the fit function
         '''
-
-        pass
+        # Find the model that best fits the training data, using linear regression
+        self.model_logistic.fit(self.X_train, self.y_train)
     
     def model_predict_linear(self):
         '''
@@ -57,9 +67,23 @@ class MyLogisticRegression:
         assert self.model_linear is not None, "Initialize the model, i.e. instantiate the variable self.model_linear in model_fit_linear method"
         assert self.training_set is not None, "self.read_csv function isn't called or the self.trianing_set hasn't been initialized "
         
+        y_pred_continuous = None
+        y_pred = None
         if self.X_test is not None:
             # perform prediction here
-            pass
+            y_pred_continuous = self.model_linear.predict(self.X_test)
+            y_pred = np.where(y_pred_continuous > 0.5, 1, 0)
+
+            accuracy = accuracy_score(self.y_test, y_pred)
+
+            precision, recall, f1, support = precision_recall_fscore_support(self.y_test, y_pred, average=None)
+
+            precision = np.array(precision)
+            recall = np.array(recall)
+            f1 = np.array(f1)
+            support = np.array(support)
+        # else:
+        #     print('FUCK1')
         
         assert precision.shape == recall.shape == f1.shape == support.shape == (2,), "precision, recall, f1, support should be an array of shape (2,)"
         return [accuracy, precision, recall, f1, support]
@@ -73,9 +97,25 @@ class MyLogisticRegression:
         precision, recall, f1, support = np.array([0,0]), np.array([0,0]), np.array([0,0]), np.array([0,0])
         assert self.model_logistic is not None, "Initialize the model, i.e. instantiate the variable self.model_logistic in model_fit_logistic method"
         assert self.training_set is not None, "self.read_csv function isn't called or the self.trianing_set hasn't been initialized "
+
+        y_pred_continuous = None
+        y_pred = None
         if self.X_test is not None:
             # perform prediction here
-            pass
+            y_pred_continuous = self.model_logistic.predict(self.X_test)
+            y_pred = np.where(y_pred_continuous > 0.5, 1, 0)
+
+            accuracy = accuracy_score(self.y_test, y_pred)
+
+            precision, recall, f1, support = precision_recall_fscore_support(self.y_test, y_pred, average=None)
+
+            precision = np.array(precision)
+            recall = np.array(recall)
+            f1 = np.array(f1)
+            support = np.array(support)
+        # else:
+        #     print('FUCK1')
+
         
         assert precision.shape == recall.shape == f1.shape == support.shape == (2,), "precision, recall, f1, support should be an array of shape (2,)"
         return [accuracy, precision, recall, f1, support]
@@ -87,5 +127,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     classifier = MyLogisticRegression(args.dataset_num, args.perform_test)
     acc = classifier.model_predict_linear()
+    # print(f"LINEAR REGRESSION STATS:\n{acc}")
     acc = classifier.model_predict_logistic()
+    # print(f"LOGISTIC REGRESSION STATS:\n{acc}")
     
