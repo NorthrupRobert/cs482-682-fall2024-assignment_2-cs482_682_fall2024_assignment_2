@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 class MyLogisticRegression:
     def __init__(self, dataset_num, perform_test):
+        # Initialize variables...
         self.training_set = None
         self.test_set = None
         self.model_logistic = LogisticRegression()
@@ -22,6 +23,7 @@ class MyLogisticRegression:
         self.read_csv(self.dataset_num)
 
     def read_csv(self, dataset_num):
+        # determine datasets you are reading from...
         if dataset_num == '1':
             train_dataset_file = 'train_q1_1.csv'
             test_dataset_file = 'test_q1_1.csv'
@@ -29,11 +31,14 @@ class MyLogisticRegression:
             train_dataset_file = 'train_q1_2.csv'
             test_dataset_file = 'test_q1_2.csv'
         else:
-            print("unsupported dataset number")
-            
+            print("unsupported dataset number") # only two different datasets
+        
+        # Split data for training set
         self.training_set = pd.read_csv(train_dataset_file, sep=',', header=0)
         self.X_train = self.training_set[['exam_score_1', 'exam_score_2']]
         self.y_train = self.training_set['label']
+
+        # If user indicated that data should be tested ('-t'), split data for test set 
         if self.perform_test:
             self.test_set = pd.read_csv(test_dataset_file, sep=',', header=0)
             self.X_test = self.test_set[['exam_score_1', 'exam_score_2']]
@@ -47,6 +52,7 @@ class MyLogisticRegression:
         initialize self.model_linear here and call the fit function
         '''
         # Find the model that best fits the training data, using linear regression
+
         # print(f"XTRAIN SIZE: {self.X_train.shape}")
         # print(f"YTRAIN SIZE: {self.y_train.shape}")
         self.model_linear.fit(self.X_train, self.y_train)
@@ -56,7 +62,7 @@ class MyLogisticRegression:
         initialize self.model_logistic here and call the fit function
         '''
         # Find the model that best fits the training data, using linear regression
-        self.model_logistic.fit(self.X_train, self.y_train)
+        self.model_logistic.fit(self.X_train, self.y_train) #ezpz
     
     def model_predict_linear(self):
         '''
@@ -65,15 +71,18 @@ class MyLogisticRegression:
         self.model_fit_linear()
         accuracy = 0.0
         precision, recall, f1, support = np.array([0,0]), np.array([0,0]), np.array([0,0]), np.array([0,0])
+        # Ensure that model and training data are set...
         assert self.model_linear is not None, "Initialize the model, i.e. instantiate the variable self.model_linear in model_fit_linear method"
         assert self.training_set is not None, "self.read_csv function isn't called or the self.trianing_set hasn't been initialized "
         
-        y_pred_continuous = None
-        y_pred = None
+        y_pred_continuous = None # for determening pred y data before it is binarized (using np.where method)
+        y_pred = None # actual pred y data
+
+        # TEST
         if self.X_test is not None:
-            # perform prediction here
+            # prediction
             y_pred_continuous = self.model_linear.predict(self.X_test)
-            y_pred = np.where(y_pred_continuous > 0.5, 1, 0)
+            y_pred = np.where(y_pred_continuous > 0.5, 1, 0) # "snap" data to 0 or 1 value, split at 0.5
 
             accuracy = accuracy_score(self.y_test, y_pred)
 
@@ -96,11 +105,14 @@ class MyLogisticRegression:
         self.model_fit_logistic()
         accuracy = 0.0
         precision, recall, f1, support = np.array([0,0]), np.array([0,0]), np.array([0,0]), np.array([0,0])
+        # Ensure that model and training data are set...
         assert self.model_logistic is not None, "Initialize the model, i.e. instantiate the variable self.model_logistic in model_fit_logistic method"
         assert self.training_set is not None, "self.read_csv function isn't called or the self.trianing_set hasn't been initialized "
 
-        y_pred_continuous = None
-        y_pred = None
+        y_pred_continuous = None # 0 -> 1
+        y_pred = None # binary data
+
+        # TEST
         if self.X_test is not None:
             # perform prediction here
             y_pred_continuous = self.model_logistic.predict(self.X_test)
@@ -133,6 +145,10 @@ class MyLogisticRegression:
         
         # Make predictions for each point in the mesh grid
         Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+
+        if isinstance(model, LinearRegression):
+            Z = np.where(Z > 0.5, 1, 0)
+
         Z = Z.reshape(xx.shape)
 
         # Plot the contour and training examples
@@ -144,17 +160,21 @@ class MyLogisticRegression:
         plt.show()
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Linear Regression')
     parser.add_argument('-d','--dataset_num', type=str, default = "1", choices=["1","2"], help='string indicating datset number. For example, 1 or 2')
     parser.add_argument('-t','--perform_test', action='store_true', help='boolean to indicate inference')
+
     args = parser.parse_args()
+
     classifier = MyLogisticRegression(args.dataset_num, args.perform_test)
+
+    # LINEAR MODEL PREDICTION
     acc = classifier.model_predict_linear()
-    # classifier.plot_decision_boundary(classifier.model_linear, "Linear Regression Decision Boundary")
-    print(f"LINEAR REGRESSION STATS:\n{acc}")
+    classifier.plot_decision_boundary(classifier.model_linear, "Linear Regression Decision Boundary")
+    # print(f"LINEAR REGRESSION STATS:\n{acc}")
+
+    # LOGISTIC MODEL PREDICTION
     acc = classifier.model_predict_logistic()
-    # classifier.plot_decision_boundary(classifier.model_logistic, "Logistic Regression Decision Boundary")
-    print(f"LOGISTIC REGRESSION STATS:\n{acc}")
-    
+    classifier.plot_decision_boundary(classifier.model_logistic, "Logistic Regression Decision Boundary")
+    # print(f"LOGISTIC REGRESSION STATS:\n{acc}")
